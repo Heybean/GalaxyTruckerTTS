@@ -45,3 +45,16 @@ function nearAngle(value1, value2, theta)
     local diff = (value1 - value2 + 180 + 360) % 360 - 180
     return math.abs(diff) <= theta
 end
+
+function quickCheckTag(tbl, name)
+    if not tbl then
+         return false
+    end
+    for _, v in pairs(tbl) do
+         if v == name then
+              return true
+         end
+    end
+
+    return false
+end
