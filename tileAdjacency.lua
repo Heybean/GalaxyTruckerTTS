@@ -1,7 +1,7 @@
 require("util")
 
 -- Queries tiles around it and checks to see if the connections are proper
-function getConnected(tile)
+function getAdjacent(tile)
     local queryPos = {{-1,0.5,0},{0,0.5,1},{1,0.5,0},{0,0.5,-1}}
     local results = {}
     local connections = tile.getVar("connect")
@@ -16,7 +16,7 @@ function getConnected(tile)
         local hits = Physics.cast({
             origin = tile.positionToWorld(queryPos[i]),
             direction = {0, -1, 0},
-            max_distance = 2,
+            max_distance = 5,
         })
 
         for _, hit in pairs(hits) do
@@ -45,7 +45,7 @@ end
 function isOrthogonal(tile)
     local angle = (tile.getRotation().y) % 90
 
-    if nearAngle(angle, 45, 40) == false then
+    if nearAngle(angle, 45, 35) == false then
         return math.floor((tile.getRotation().y / 90) + 0.5) % 4
     end
 
@@ -55,4 +55,29 @@ end
 -- side: 1=left, 2=top, 3=right, 4=bot
 function getConnectorType(connectors, rotInd, side)
     return connectors[(side - (rotInd + 1) + 4) % 4 + 1]
+end
+
+-- starting from tile, checks for connected tiles that match the tag being searched for.
+function getConnectedMatchingTiles(tile, matchTag, ignores, results, tempIgnore)
+    results = results or {}
+    ignores = ignores or {}
+    tempIgnore = tempIgnore or {}
+
+    local adjacentTiles = getAdjacent(tile)
+
+    for i=1, #adjacentTiles do
+        local adjTile = adjacentTiles[i]
+
+        if adjTile.connected and not ignores[adjTile.tile.getGUID()] and not tempIgnore[adjTile.tile.getGUID()] then
+            tempIgnore[tile.getGUID()] = true
+            if adjTile.tile.hasTag(matchTag) then
+                results[#results + 1] = adjTile.tile
+            elseif adjTile.tile.hasTag("Router") then
+                getConnectedMatchingTiles(adjTile.tile, matchTag, ignores, results, tempIgnore)
+            end
+        end
+
+    end
+
+    return results
 end
