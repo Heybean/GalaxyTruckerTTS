@@ -68,115 +68,6 @@ function updateStats()
      updateTimeStart = os.clock()
 end
 
-function iterAllShipObjects(ignoreCertainItems)
-     local boardSnapPointStartIndex = {
-          ["IC"] = 0,
-          ["IIA"] = 0,
-          ["IIC"] = 0,
-          ["IIIC"] = 0,
-          ["IVC"] = 0,
-     }
-     local boardSnapPointMaxIndex = {
-          ["IC"] = 0,
-          ["IIA"] = 0,
-          ["IIB"] = 0,
-          ["IIC"] = 0,
-          ["IIIA"] = 0,
-          ["IIIB"] = 0,
-          ["IIIC"] = 1,
-          ["IVC"] = 1,
-     }
-
-     local ignores = {}
-     local registered = Global.getVar("registered")
-     local fb = getObjectFromGUID(registered.ships[player][1])
-
-     if not fb then
-          return
-     end
-
-     -- Register for ignores in the destroyed parts area
-     -- By default, the two snap points before the last one should be the destroyed parts area
-     local sp = fb.getSnapPoints()
-
-     if not sp or #sp < 3 then
-          return
-     end
-
-     local startIndex = boardSnapPointStartIndex[fb.getName()] or 1
-     local maxIndex = boardSnapPointMaxIndex[fb.getName()] or 2
-
-     for i=startIndex, maxIndex do
-          local pos = fb.positionToWorld(sp[#sp-i].position)
-          local hits = Physics.cast({
-               origin = {pos[1], pos[2] - 1, pos[3]},
-               direction = {0, 1, 0},
-               max_distance = 4,
-          })
-
-          for _, hit in pairs(hits) do
-               if hit.hit_object.hasTag("Tile") then
-                    ignores[hit.hit_object.getGUID()] = true
-               end
-          end
-     end
-
-     local zone = getObjectFromGUID(zoneGuid)
-     local objs = zone.getObjects()
-
-     if ignoreCertainItems then
-          for _, obj in pairs(objs) do
-               if obj.hasTag("Stasis") then
-                    local sz = obj.getBounds().size
-                    local hits = Physics.cast({
-                         origin = obj.getPosition(),
-                         direction = {0, 1, 0},
-                         max_distance = 4,
-                         type = 3,
-                         size = {sz[1], 0.1, sz[3]},
-                    })
-     
-                    for _, hit in pairs(hits) do
-                         if hit.hit_object.hasTag("Crew") then
-                              ignores[hit.hit_object.getGUID()] = true
-                         end
-                    end
-               elseif obj.hasTag("Cancel") then
-                    local pos = obj.getPosition()
-                    local hits = Physics.cast({
-                         origin = {pos[1], pos[2] + 0.5, pos[3]},
-                         direction = {0,-1,0},
-                         max_distance = 1
-                    })
-     
-                    for _, hit in pairs(hits) do
-                         if hit.hit_object.hasTag("Tile") then
-                              ignores[hit.hit_object.getGUID()] = true
-                         end
-                    end
-               end
-          end
-     end
-
-     local i = 0
-
-     return function ()
-          while i < #objs do
-               i = i + 1
-
-               while i <= #objs and ignores[objs[i].getGUID()] do
-                    i = i + 1
-               end
-
-               if i <= #objs then
-                    return objs[i]
-               end
-          end
-
-          return nil
-     end
-end
-
 function updateStatsCo()
      local zone = getObjectFromGUID(zoneGuid)
      local ignoresADS = {}
@@ -207,7 +98,7 @@ function updateStatsCo()
 
      local forward = hand.rotation[2]
 
-     for obj in iterAllShipObjects(true) do
+     for obj in iterAllShipObjects(player, zoneGuid, true) do
           if obj.hasTag("Crewbots") then
                plusCrew = plusCrew + 4
           end
@@ -321,7 +212,7 @@ function statLabelFormatter(baseValue, bonusValue)
 end
 
 function lockTilesClick(owner, player_color)
-     for obj in iterAllShipObjects(false) do
+     for obj in iterAllShipObjects(player, zoneGuid, false) do
           if obj.hasTag("Tile") then
                obj.setLock(true)
           end
@@ -331,7 +222,7 @@ function lockTilesClick(owner, player_color)
 end
 
 function unlockTilesClick(owner, player_color)
-     for obj in iterAllShipObjects(false) do
+     for obj in iterAllShipObjects(player, zoneGuid, false) do
           if obj.hasTag("Tile") then
                obj.setLock(false)
           end

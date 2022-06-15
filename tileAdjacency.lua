@@ -58,22 +58,21 @@ function getConnectorType(connectors, rotInd, side)
 end
 
 -- starting from tile, checks for connected tiles that match the tag being searched for.
-function getConnectedMatchingTiles(tile, matchTag, ignores, results, tempIgnore)
+function getConnectedMatchingTiles(tile, matchTag, ignores, results)
     results = results or {}
     ignores = ignores or {}
-    tempIgnore = tempIgnore or {}
 
     local adjacentTiles = getAdjacent(tile)
 
     for i=1, #adjacentTiles do
         local adjTile = adjacentTiles[i]
 
-        if adjTile.connected and not ignores[adjTile.tile.getGUID()] and not tempIgnore[adjTile.tile.getGUID()] then
-            tempIgnore[tile.getGUID()] = true
+        if adjTile.connected and not ignores[adjTile.tile.getGUID()] then
+            ignores[tile.getGUID()] = true
             if adjTile.tile.hasTag(matchTag) then
                 results[#results + 1] = adjTile.tile
             elseif adjTile.tile.hasTag("Router") then
-                getConnectedMatchingTiles(adjTile.tile, matchTag, ignores, results, tempIgnore)
+                getConnectedMatchingTiles(adjTile.tile, matchTag, ignores, results)
             end
         end
 
