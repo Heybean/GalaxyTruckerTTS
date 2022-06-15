@@ -25,21 +25,6 @@ function getSeatedPlayersWithHands()
      return results
 end
 
-function checkInRegion(pos, regionBounds)
-    local rect = {
-         ['left'] = regionBounds.center[1] - regionBounds.size[1] / 2,
-         ['top'] = regionBounds.center[3] + regionBounds.size[3] / 2,
-         ['right'] = regionBounds.center[1] + regionBounds.size[1] / 2,
-         ['bottom'] = regionBounds.center[3] - regionBounds.size[3] / 2
-    }
-
-    if pos[1] < rect.left or pos[1] > rect.right or pos[3] > rect.top or pos[3] < rect.bottom then
-         return false
-    end
-
-    return true
-end
-
 -- checks if value1 is close to value2, in degrees. Theta is the offset
 function nearAngle(value1, value2, theta)
     local diff = (value1 - value2 + 180 + 360) % 360 - 180
